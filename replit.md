@@ -28,7 +28,9 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Independent service at `/trust-gate` on port 8082
 - Validation pipeline: input normalization → signature check → context reconstruction → signal evaluation → confidence assessment → decision engine → evidence packaging → DB write
 - Rule engine with modular rules: schema-completeness, timestamp-freshness, action-type-allowlist, state-diff
-- Decision logic: any REJECTED → REJECTED; low confidence → UNKNOWN; all VALID + high confidence → VALID
+- Decision policy (strict precedence): signature fail → REJECTED; any rule REJECTED → REJECTED; any rule UNKNOWN → UNKNOWN; LOW confidence → UNKNOWN; all rules VALID + HIGH confidence → VALID
+- Signature verification: HMAC-SHA256, fail-closed by default (no secret = REJECTED). Canonicalization excludes `signature` field with deep key sorting. Set TRUST_GATE_REQUIRE_SIGNATURE=false in dev to skip.
+- All decisions persisted including malformed JSON and schema validation failures
 - Evidence stored in PostgreSQL (`validation_evidence` table) with SHA-256 input hashes
 - Endpoints:
   - POST /trust-gate/validate-action
@@ -44,13 +46,21 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - verdict (enum: VALID, REJECTED, UNKNOWN)
 - confidence (enum: HIGH, LOW)
 - reason (text)
-- input_hash (text, SHA-256)
-- action_type (text)
+- input_hash (text, SHA-256, indexed for replay detection queries)
+- action_type (text, indexed)
 - caller_id (text, nullable)
 - request_payload (jsonb)
 - rule_results (jsonb)
 - pipeline_context (jsonb, nullable)
-- created_at (timestamptz)
+- created_at (timestamptz, indexed)
+
+### validation_rules
+- id (uuid, PK)
+- name (text, unique)
+- description (text)
+- enabled (boolean, default true)
+- config (jsonb, nullable)
+- created_at, updated_at (timestamptz)
 
 ## Key Commands
 

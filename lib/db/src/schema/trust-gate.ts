@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, timestamp, jsonb, pgEnum, boolean as pgBoolean } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, timestamp, jsonb, pgEnum, boolean as pgBoolean, index } from "drizzle-orm/pg-core";
 
 export const verdictEnum = pgEnum("verdict", ["VALID", "REJECTED", "UNKNOWN"]);
 export const confidenceEnum = pgEnum("confidence_level", ["HIGH", "LOW"]);
@@ -15,7 +15,11 @@ export const validationEvidenceTable = pgTable("validation_evidence", {
   ruleResults: jsonb("rule_results").notNull(),
   pipelineContext: jsonb("pipeline_context"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_validation_evidence_input_hash").on(table.inputHash),
+  index("idx_validation_evidence_action_type").on(table.actionType),
+  index("idx_validation_evidence_created_at").on(table.createdAt),
+]);
 
 export type ValidationEvidence = typeof validationEvidenceTable.$inferSelect;
 export type InsertValidationEvidence = typeof validationEvidenceTable.$inferInsert;
