@@ -1,0 +1,34 @@
+kind = "api"
+previewPath = "/trust-gate"
+title = "Trust Gate"
+version = "1.0.0"
+
+[[services]]
+localPort = 8082
+name = "Trust Gate"
+paths = ["/trust-gate"]
+
+[services.development]
+run = "pnpm --filter @workspace/trust-gate run dev"
+
+[services.development.env]
+TRUST_GATE_BASE_PATH = "/trust-gate"
+
+[services.production]
+
+[services.production.build]
+args = ["pnpm", "--filter", "@workspace/trust-gate", "run", "build"]
+
+[services.production.build.env]
+NODE_ENV = "production"
+
+[services.production.run]
+args = ["node", "--enable-source-maps", "artifacts/trust-gate/dist/index.mjs"]
+
+[services.production.run.env]
+PORT = "8082"
+NODE_ENV = "production"
+TRUST_GATE_BASE_PATH = "/trust-gate"
+
+[services.production.health.startup]
+path = "/trust-gate/healthz"
