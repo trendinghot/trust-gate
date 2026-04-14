@@ -62,6 +62,13 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - config (jsonb, nullable)
 - created_at, updated_at (timestamptz)
 
+### VerifyNet Homepage (`artifacts/verifynet`)
+- Product landing page for VerifyNet / Trust Gate at `/verifynet`
+- React + Vite, dark theme, 8-section single-page design
+- Live demo section sends real requests to Trust Gate API (`/trust-gate/validate-recovery`)
+- Sections: Hero, Problem, Structural Failure, Solution (Trust Gate), Live Demo, Architecture Pipeline, Comparison Table, Final CTA
+- Fonts: Space Grotesk (display), Inter (body), JetBrains Mono (code)
+
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages
