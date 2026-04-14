@@ -47,9 +47,11 @@ export default function Home() {
             <a href="#architecture" className="hover:text-white transition-colors">Architecture</a>
             <a href="#demo" className="hover:text-white transition-colors">Live Demo</a>
           </div>
-          <Button variant="outline" className="font-mono text-xs rounded-none border-white/20 hover:bg-white hover:text-black transition-all">
-            DOCUMENTATION
-          </Button>
+          <a href="#architecture">
+            <Button variant="outline" className="font-mono text-xs rounded-none border-white/20 hover:bg-white hover:text-black transition-all">
+              DOCUMENTATION
+            </Button>
+          </a>
         </div>
       </nav>
 
@@ -406,12 +408,16 @@ export default function Home() {
               It must be enforced. VerifyNet is the layer that makes autonomous systems accountable.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button data-testid="button-get-early-access" size="lg" className="rounded-none font-mono h-14 px-8 bg-black text-white hover:bg-black/90">
-                Get Early Access
-              </Button>
-              <Button data-testid="button-view-api-docs" size="lg" variant="outline" className="rounded-none font-mono h-14 px-8 border-black/20 text-black hover:bg-black/5">
-                View API Docs
-              </Button>
+              <a href="#demo">
+                <Button data-testid="button-get-early-access" size="lg" className="rounded-none font-mono h-14 px-8 bg-black text-white hover:bg-black/90">
+                  Get Early Access
+                </Button>
+              </a>
+              <a href="#architecture">
+                <Button data-testid="button-view-api-docs" size="lg" variant="outline" className="rounded-none font-mono h-14 px-8 border-black/20 text-black hover:bg-black/5">
+                  View API Docs
+                </Button>
+              </a>
             </div>
           </div>
         </section>
