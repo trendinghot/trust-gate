@@ -23,6 +23,17 @@ router.get("/metrics/validations", async (_req, res) => {
     .from(validationEvidenceTable)
     .groupBy(validationEvidenceTable.actionType, validationEvidenceTable.verdict);
 
+  const byRule = await db.execute(sql`
+    SELECT
+      rule_result->>'ruleName' AS rule_name,
+      rule_result->>'status' AS rule_status,
+      count(*)::int AS count
+    FROM validation_evidence,
+      jsonb_array_elements(rule_results) AS rule_result
+    GROUP BY rule_result->>'ruleName', rule_result->>'status'
+    ORDER BY rule_name, rule_status
+  `);
+
   const total = byStatus.reduce((sum, row) => sum + row.count, 0);
   const statusMap: Record<string, number> = {};
   for (const row of byStatus) {
@@ -37,6 +48,7 @@ router.get("/metrics/validations", async (_req, res) => {
       UNKNOWN: statusMap["UNKNOWN"] ?? 0,
     },
     byActionType,
+    byRule: byRule.rows,
   });
 });
 

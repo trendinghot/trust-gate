@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, timestamp, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, timestamp, jsonb, pgEnum, boolean as pgBoolean } from "drizzle-orm/pg-core";
 
 export const verdictEnum = pgEnum("verdict", ["VALID", "REJECTED", "UNKNOWN"]);
 export const confidenceEnum = pgEnum("confidence_level", ["HIGH", "LOW"]);
@@ -19,3 +19,16 @@ export const validationEvidenceTable = pgTable("validation_evidence", {
 
 export type ValidationEvidence = typeof validationEvidenceTable.$inferSelect;
 export type InsertValidationEvidence = typeof validationEvidenceTable.$inferInsert;
+
+export const validationRulesTable = pgTable("validation_rules", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description").notNull(),
+  enabled: pgBoolean("enabled").default(true).notNull(),
+  config: jsonb("config"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type ValidationRule = typeof validationRulesTable.$inferSelect;
+export type InsertValidationRule = typeof validationRulesTable.$inferInsert;

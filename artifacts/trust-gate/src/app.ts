@@ -29,7 +29,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const basePath = process.env.TRUST_GATE_BASE_PATH ?? "/trust-gate";
-app.use(basePath, router);
+app.use("/trust-gate", router);
 
 export default app;

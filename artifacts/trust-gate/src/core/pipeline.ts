@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { db } from "@workspace/db";
 import { validationEvidenceTable } from "@workspace/db/schema";
 import type { ActionClaim, RecoveryClaim, PipelineContext, ValidationResponse, RuleResult, Confidence, Verdict } from "./types";
@@ -18,58 +18,98 @@ function computeInputHash(normalized: Record<string, unknown>): string {
   return createHash("sha256").update(json).digest("hex");
 }
 
-function verifySignature(signature: string | undefined, _inputHash: string): boolean | null {
-  if (!signature) return null;
+function verifySignature(signature: string | undefined, inputHash: string): boolean | null {
   const secret = process.env.TRUST_GATE_HMAC_SECRET;
-  if (!secret) return null;
-  const expected = createHash("sha256").update(_inputHash + secret).digest("hex");
-  return signature === expected;
+  if (!secret) {
+    return null;
+  }
+  if (!signature) {
+    return false;
+  }
+  const expected = createHmac("sha256", secret).update(inputHash).digest("hex");
+  try {
+    const sigBuf = Buffer.from(signature, "hex");
+    const expBuf = Buffer.from(expected, "hex");
+    if (sigBuf.length !== expBuf.length) return false;
+    return timingSafeEqual(sigBuf, expBuf);
+  } catch {
+    return false;
+  }
 }
 
-function assessConfidence(ruleResults: RuleResult[]): Confidence {
+function reconstructContext(claim: ActionClaim | RecoveryClaim, claimType: "action" | "recovery"): Record<string, unknown> {
+  const context: Record<string, unknown> = {
+    claimType,
+    actionType: claim.actionType,
+    systemId: claim.systemId,
+    callerId: claim.callerId ?? null,
+    claimTimestamp: claim.timestamp,
+    evaluationTimestamp: new Date().toISOString(),
+  };
+  if (claimType === "recovery") {
+    const recovery = claim as RecoveryClaim;
+    context.hasBeforeState = !!recovery.beforeState;
+    context.hasAfterState = !!recovery.afterState;
+    context.beforeStateKeys = recovery.beforeState ? Object.keys(recovery.beforeState) : [];
+    context.afterStateKeys = recovery.afterState ? Object.keys(recovery.afterState) : [];
+  }
+  return context;
+}
+
+function assessConfidence(ruleResults: RuleResult[], signatureValid: boolean | null): Confidence {
   const validCount = ruleResults.filter(r => r.status === "VALID").length;
   const totalEvaluated = ruleResults.length;
   if (totalEvaluated === 0) return "LOW";
+  if (signatureValid === false) return "LOW";
   if (validCount > 1) return "HIGH";
   return "LOW";
 }
 
-function decide(ruleResults: RuleResult[], confidence: Confidence): { verdict: Verdict; reason: string } {
+function decide(ruleResults: RuleResult[], confidence: Confidence, signatureValid: boolean | null): { verdict: Verdict; reason: string } {
+  if (signatureValid === false) {
+    return { verdict: "REJECTED", reason: "Invalid or missing signature" };
+  }
+
   const rejected = ruleResults.find(r => r.status === "REJECTED");
   if (rejected) {
     return { verdict: "REJECTED", reason: rejected.reason };
   }
 
-  const unknown = ruleResults.find(r => r.status === "UNKNOWN");
+  const hasUnknown = ruleResults.some(r => r.status === "UNKNOWN");
+  if (hasUnknown) {
+    const unknownRule = ruleResults.find(r => r.status === "UNKNOWN");
+    return {
+      verdict: "UNKNOWN",
+      reason: unknownRule?.reason ?? "One or more rules returned UNKNOWN",
+    };
+  }
+
   if (confidence === "LOW") {
     return {
       verdict: "UNKNOWN",
-      reason: unknown?.reason ?? "Insufficient signal confidence to determine validity",
+      reason: "Insufficient signal confidence to determine validity",
     };
   }
 
   return { verdict: "VALID", reason: "All rules passed with high confidence" };
 }
 
-export async function validateAction(claim: ActionClaim): Promise<ValidationResponse> {
+async function runPipeline(
+  claim: ActionClaim | RecoveryClaim,
+  claimType: "action" | "recovery"
+): Promise<ValidationResponse> {
   const normalizedInput = normalizeInput(claim as unknown as Record<string, unknown>);
   const inputHash = computeInputHash(normalizedInput);
+
   const signatureValid = verifySignature(claim.signature, inputHash);
 
-  const ruleResults = evaluateRules(claim, "action");
-  const confidence = assessConfidence(ruleResults);
-  const { verdict, reason } = decide(ruleResults, confidence);
+  const context = reconstructContext(claim, claimType);
 
-  const ctx: PipelineContext = {
-    normalizedInput,
-    inputHash,
-    signatureValid,
-    ruleResults,
-    confidence,
-    verdict,
-    reason,
-    claimType: "action",
-  };
+  const ruleResults = evaluateRules(claim, claimType);
+
+  const confidence = assessConfidence(ruleResults, signatureValid);
+
+  const { verdict, reason } = decide(ruleResults, confidence, signatureValid);
 
   const [evidence] = await db.insert(validationEvidenceTable).values({
     verdict,
@@ -80,10 +120,10 @@ export async function validateAction(claim: ActionClaim): Promise<ValidationResp
     callerId: claim.callerId ?? null,
     requestPayload: claim as unknown as Record<string, unknown>,
     ruleResults: ruleResults as unknown as Record<string, unknown>[],
-    pipelineContext: { signatureValid, claimType: "action" },
+    pipelineContext: { signatureValid, claimType, context },
   }).returning();
 
-  logger.info({ evidenceId: evidence.id, verdict, confidence, actionType: claim.actionType }, "Action validated");
+  logger.info({ evidenceId: evidence.id, verdict, confidence, actionType: claim.actionType }, `${claimType} validated`);
 
   return {
     status: verdict,
@@ -94,34 +134,10 @@ export async function validateAction(claim: ActionClaim): Promise<ValidationResp
   };
 }
 
+export async function validateAction(claim: ActionClaim): Promise<ValidationResponse> {
+  return runPipeline(claim, "action");
+}
+
 export async function validateRecovery(claim: RecoveryClaim): Promise<ValidationResponse> {
-  const normalizedInput = normalizeInput(claim as unknown as Record<string, unknown>);
-  const inputHash = computeInputHash(normalizedInput);
-  const signatureValid = verifySignature(claim.signature, inputHash);
-
-  const ruleResults = evaluateRules(claim, "recovery");
-  const confidence = assessConfidence(ruleResults);
-  const { verdict, reason } = decide(ruleResults, confidence);
-
-  const [evidence] = await db.insert(validationEvidenceTable).values({
-    verdict,
-    confidence,
-    reason,
-    inputHash,
-    actionType: claim.actionType,
-    callerId: claim.callerId ?? null,
-    requestPayload: claim as unknown as Record<string, unknown>,
-    ruleResults: ruleResults as unknown as Record<string, unknown>[],
-    pipelineContext: { signatureValid, claimType: "recovery" },
-  }).returning();
-
-  logger.info({ evidenceId: evidence.id, verdict, confidence, actionType: claim.actionType }, "Recovery validated");
-
-  return {
-    status: verdict,
-    reason,
-    confidence,
-    evidenceId: evidence.id,
-    ruleResults,
-  };
+  return runPipeline(claim, "recovery");
 }

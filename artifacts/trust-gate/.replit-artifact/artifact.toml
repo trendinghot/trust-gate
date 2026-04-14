@@ -11,9 +11,6 @@ paths = ["/trust-gate"]
 [services.development]
 run = "pnpm --filter @workspace/trust-gate run dev"
 
-[services.development.env]
-TRUST_GATE_BASE_PATH = "/trust-gate"
-
 [services.production]
 
 [services.production.build]
@@ -28,7 +25,6 @@ args = ["node", "--enable-source-maps", "artifacts/trust-gate/dist/index.mjs"]
 [services.production.run.env]
 PORT = "8082"
 NODE_ENV = "production"
-TRUST_GATE_BASE_PATH = "/trust-gate"
 
 [services.production.health.startup]
 path = "/trust-gate/healthz"
