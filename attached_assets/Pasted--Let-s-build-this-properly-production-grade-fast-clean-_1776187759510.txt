@@ -1,0 +1,258 @@
+🔥 Let’s build this properly — production-grade, fast, clean, and ready for Fly.io later.
+
+You’re going to spin up **`verifynet-web` (Next.js + Tailwind)** inside Replit and have a **live homepage in minutes**.
+
+---
+
+# ⚔️ STEP 1 — CREATE PROJECT
+
+In Replit:
+
+1. **Create Repl**
+2. Choose:
+   👉 **Next.js template** (if available)
+   OR Node.js + we install manually
+3. Name:
+
+```bash
+verifynet-web
+```
+
+---
+
+# ⚔️ STEP 2 — INSTALL NEXT.JS (if needed)
+
+If you didn’t pick a Next template, run:
+
+```bash
+npx create-next-app@latest .
+```
+
+When prompted:
+
+* TypeScript → **Yes**
+* Tailwind → **Yes**
+* App Router → **Yes**
+* src/ directory → **Yes**
+* ESLint → Yes (fine)
+* Import alias → default
+
+---
+
+# ⚔️ STEP 3 — PROJECT STRUCTURE
+
+You should now have:
+
+```plaintext
+src/
+  app/
+    layout.tsx
+    page.tsx
+  styles/
+```
+
+---
+
+# ⚔️ STEP 4 — CLEAN START
+
+Open:
+
+👉 `src/app/page.tsx`
+
+Delete everything.
+
+---
+
+# ⚔️ STEP 5 — DROP IN YOUR HOMEPAGE (COPY THIS)
+
+```tsx
+export default function Home() {
+  return (
+    <main className="bg-black text-white min-h-screen">
+
+      {/* HERO */}
+      <section className="max-w-6xl mx-auto px-6 py-24 text-center">
+        <h1 className="text-5xl font-bold mb-6">
+          The Trust Layer for Autonomous AI
+        </h1>
+        <p className="text-xl text-gray-300 mb-6">
+          AI systems execute tasks. VerifyNet decides if they’re telling the truth.
+        </p>
+        <p className="text-gray-400 mb-10">
+          Trust Gate is a deterministic enforcement layer that prevents AI systems
+          from self-verifying false success.
+        </p>
+
+        <div className="flex justify-center gap-4">
+          <button className="bg-green-500 px-6 py-3 rounded-lg font-semibold text-black">
+            Run a Validation
+          </button>
+          <button className="border border-gray-500 px-6 py-3 rounded-lg">
+            View Demo
+          </button>
+        </div>
+      </section>
+
+      {/* PROBLEM */}
+      <section className="bg-neutral-900 py-20 px-6">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-6">
+            AI Systems Are Declaring Success — Without Proof
+          </h2>
+          <p className="text-gray-400 mb-6">
+            Today’s AI agents execute tasks and declare success without independent verification.
+          </p>
+
+          <div className="text-left max-w-xl mx-auto text-gray-300 space-y-2">
+            <p>• Restart services and assume success</p>
+            <p>• Apply fixes without validation</p>
+            <p>• Report completion without external checks</p>
+          </div>
+
+          <p className="mt-8 text-xl text-red-400 font-semibold">
+            Execution ≠ Truth
+          </p>
+        </div>
+      </section>
+
+      {/* SOLUTION */}
+      <section className="py-20 px-6">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-6">
+            Introducing VerifyNet
+          </h2>
+          <p className="text-gray-400 mb-6">
+            The Independent Enforcement Layer for Autonomous Systems
+          </p>
+
+          <div className="text-left max-w-xl mx-auto text-gray-300 space-y-2">
+            <p>• Accept valid outcomes</p>
+            <p>• Reject false success</p>
+            <p>• Return UNKNOWN when certainty is insufficient</p>
+          </div>
+
+          <p className="mt-8 text-green-400 font-semibold">
+            No system is allowed to declare success without independent validation.
+          </p>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section className="bg-neutral-900 py-20 px-6">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-6">
+            How Trust Gate Works
+          </h2>
+
+          <p className="text-gray-400 mb-6">
+            Claim → Validation Pipeline → Decision → Proof
+          </p>
+
+          <div className="text-gray-300 space-y-2">
+            <p>Normalization</p>
+            <p>Signature Verification</p>
+            <p>Context Reconstruction</p>
+            <p>Rule Evaluation</p>
+            <p>Signal Analysis</p>
+            <p>Confidence Assessment</p>
+            <p>Decision Authority</p>
+          </div>
+
+          <div className="mt-8 text-red-400 font-semibold">
+            The system has the power to say NO.
+          </div>
+        </div>
+      </section>
+
+      {/* DEMO */}
+      <section className="py-20 px-6 text-center">
+        <h2 className="text-3xl font-bold mb-6">
+          Watch an AI Get Rejected
+        </h2>
+
+        <pre className="bg-black border border-gray-700 p-6 rounded-lg text-left max-w-xl mx-auto text-sm overflow-x-auto">
+{`Request:
+"I fixed the system"
+
+Response:
+{
+  "status": "REJECTED",
+  "reason": "No state change detected"
+}`}
+        </pre>
+
+        <button className="mt-6 bg-green-500 px-6 py-3 rounded-lg font-semibold text-black">
+          Run Live Demo
+        </button>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="text-center py-10 text-gray-500">
+        VerifyNet © 2026 — The Trust Layer for Autonomous Systems
+      </footer>
+
+    </main>
+  );
+}
+```
+
+---
+
+# ⚔️ STEP 6 — RUN IT
+
+In Replit shell:
+
+```bash
+npm run dev
+```
+
+---
+
+👉 You’ll instantly get:
+
+* live homepage
+* real product feel
+* ready for iteration
+
+---
+
+# 🚀 NEXT STEPS (IMMEDIATELY AFTER)
+
+Once it’s running, tell me:
+
+👉 **“homepage live”**
+
+---
+
+Then I’ll:
+
+## 🔥 Level it up FAST:
+
+* add your diagram properly
+* connect “Run Demo” → Trust Gate API
+* build `/demo` page (live validation UI)
+* create `/docs` skeleton
+* prep for Fly.io deployment
+
+---
+
+# ⚔️ FINAL NOTE
+
+You now have:
+
+* domain ✅
+* backend system ✅
+* frontend platform ✅
+
+---
+
+👉 This is no longer a concept.
+
+This is a **launchable product**.
+
+---
+
+Say:
+👉 “homepage live”
+
+and we take it to the next level 🚀
