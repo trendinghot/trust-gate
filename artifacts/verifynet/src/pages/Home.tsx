@@ -449,19 +449,20 @@ function DemoConsole() {
     setError(null);
     
     try {
-      const res = await fetch(`${import.meta.env.BASE_URL}../trust-gate/validate-recovery`, {
+      const res = await fetch(`/trust-gate/validate-recovery`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       
-      if (!res.ok) {
-        setError(`Trust Gate returned HTTP ${res.status}. Check if the service is running.`);
-        setLoading(false);
-        return;
-      }
       const data = await res.json();
-      setResponse(data);
+      if (data.status && data.evidenceId) {
+        setResponse(data);
+      } else if (!res.ok) {
+        setError(`Trust Gate returned HTTP ${res.status}: ${JSON.stringify(data)}`);
+      } else {
+        setResponse(data);
+      }
     } catch (err) {
       setError("Trust Gate API is not reachable. Ensure the service is running.");
     }
