@@ -5,16 +5,23 @@ import type { ActionClaim, RecoveryClaim, PipelineContext, ValidationResponse, R
 import { evaluateRules } from "./rule-engine";
 import { logger } from "../lib/logger";
 
-function normalizeInput(input: Record<string, unknown>): Record<string, unknown> {
-  const sorted = Object.keys(input).sort().reduce<Record<string, unknown>>((acc, key) => {
-    acc[key] = input[key];
-    return acc;
-  }, {});
+function deepSortKeys(obj: unknown): unknown {
+  if (obj === null || obj === undefined || typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) return obj.map(deepSortKeys);
+  const sorted: Record<string, unknown> = {};
+  for (const key of Object.keys(obj as Record<string, unknown>).sort()) {
+    sorted[key] = deepSortKeys((obj as Record<string, unknown>)[key]);
+  }
   return sorted;
 }
 
-function computeInputHash(normalized: Record<string, unknown>): string {
-  const json = JSON.stringify(normalized);
+function canonicalizeForSigning(input: Record<string, unknown>): Record<string, unknown> {
+  const { signature: _sig, ...rest } = input;
+  return deepSortKeys(rest) as Record<string, unknown>;
+}
+
+function computeInputHash(canonicalized: Record<string, unknown>): string {
+  const json = JSON.stringify(canonicalized);
   return createHash("sha256").update(json).digest("hex");
 }
 
@@ -112,8 +119,8 @@ async function runPipeline(
   claim: ActionClaim | RecoveryClaim,
   claimType: "action" | "recovery"
 ): Promise<ValidationResponse> {
-  const normalizedInput = normalizeInput(claim as unknown as Record<string, unknown>);
-  const inputHash = computeInputHash(normalizedInput);
+  const canonicalized = canonicalizeForSigning(claim as unknown as Record<string, unknown>);
+  const inputHash = computeInputHash(canonicalized);
 
   const sigResult = verifySignature(claim.signature, inputHash);
 
